@@ -21,6 +21,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -73,6 +74,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -90,6 +92,7 @@ import com.lanrhyme.micyou.animation.rememberGlowAnimation
 import com.lanrhyme.micyou.animation.rememberPulseAnimation
 import com.lanrhyme.micyou.animation.rememberRotationAnimation
 import com.lanrhyme.micyou.animation.rememberWaveAnimation
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.icon_settings
@@ -110,6 +113,10 @@ fun MobileHome(viewModel: MainViewModel) {
     
     var showSettings by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(false) }
+    
+    val hazeState = if (state.backgroundSettings.enableHazeEffect && state.backgroundSettings.hasCustomBackground) {
+        rememberHazeState()
+    } else null
     
     LaunchedEffect(Unit) {
         delay(100)
@@ -185,7 +192,8 @@ fun MobileHome(viewModel: MainViewModel) {
         Box(modifier = Modifier.fillMaxSize()) {
             CustomBackground(
                 settings = state.backgroundSettings,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                hazeState = hazeState
             )
             
             Column(
@@ -204,7 +212,8 @@ fun MobileHome(viewModel: MainViewModel) {
                         viewModel = viewModel,
                         isClient = isClient,
                         strings = strings,
-                        cardOpacity = state.backgroundSettings.cardOpacity
+                        cardOpacity = state.backgroundSettings.cardOpacity,
+                        hazeState = hazeState
                     )
                 }
 
@@ -216,7 +225,8 @@ fun MobileHome(viewModel: MainViewModel) {
                         state = state,
                         viewModel = viewModel,
                         strings = strings,
-                        cardOpacity = state.backgroundSettings.cardOpacity
+                        cardOpacity = state.backgroundSettings.cardOpacity,
+                        hazeState = hazeState
                     )
                 }
                 
@@ -285,122 +295,157 @@ private fun ConnectionConfigCard(
     viewModel: MainViewModel,
     isClient: Boolean,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity)
-        ),
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    if (state.backgroundSettings.enableHazeEffect && hazeState != null) {
+        HazeCard(
+            hazeState = hazeState,
+            enabled = true,
+            hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    strings.connectionModeLabel,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+            ConnectionConfigCardContent(
+                state = state,
+                viewModel = viewModel,
+                isClient = isClient,
+                strings = strings
+            )
+        }
+    } else {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity)
+            ),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            ConnectionConfigCardContent(
+                state = state,
+                viewModel = viewModel,
+                isClient = isClient,
+                strings = strings
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConnectionConfigCardContent(
+    state: AppUiState,
+    viewModel: MainViewModel,
+    isClient: Boolean,
+    strings: AppStrings
+) {
+    Column(
+        modifier = Modifier.padding(20.dp).fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                strings.connectionModeLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val modes = listOf(
+                    ConnectionMode.Wifi to strings.modeWifi,
+                    ConnectionMode.Bluetooth to strings.modeBluetooth,
+                    ConnectionMode.Usb to strings.modeUsb
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    val modes = listOf(
-                        ConnectionMode.Wifi to strings.modeWifi,
-                        ConnectionMode.Bluetooth to strings.modeBluetooth,
-                        ConnectionMode.Usb to strings.modeUsb
-                    )
+                
+                modes.forEachIndexed { index, (mode, label) ->
+                    var chipVisible by remember { mutableStateOf(false) }
                     
-                    modes.forEachIndexed { index, (mode, label) ->
-                        var chipVisible by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        delay(100L + index * 50L)
+                        chipVisible = true
+                    }
+                    
+                    AnimatedVisibility(
+                        visible = chipVisible,
+                        enter = fadeIn(tween(200)) + slideInHorizontally(
+                            initialOffsetX = { -20 },
+                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                        ) + scaleIn(initialScale = 0.8f),
+                        exit = fadeOut(tween(150)) + slideOutHorizontally { 20 } + scaleOut(targetScale = 0.8f),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        val interactionSource = remember { MutableInteractionSource() }
+                        val isPressed by interactionSource.collectIsPressedAsState()
+                        val chipScale by animateFloatAsState(
+                            targetValue = if (isPressed) 0.92f else 1f,
+                            animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy)
+                        )
                         
-                        LaunchedEffect(Unit) {
-                            delay(100L + index * 50L)
-                            chipVisible = true
-                        }
-                        
-                        AnimatedVisibility(
-                            visible = chipVisible,
-                            enter = fadeIn(tween(200)) + slideInHorizontally(
-                                initialOffsetX = { -20 },
-                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                            ) + scaleIn(initialScale = 0.8f),
-                            exit = fadeOut(tween(150)) + slideOutHorizontally { 20 } + scaleOut(targetScale = 0.8f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isPressed by interactionSource.collectIsPressedAsState()
-                            val chipScale by animateFloatAsState(
-                                targetValue = if (isPressed) 0.92f else 1f,
-                                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy)
-                            )
-                            
-                            FilterChip(
-                                selected = state.mode == mode,
-                                onClick = { viewModel.setMode(mode) },
-                                interactionSource = interactionSource,
-                                label = { Text(label) },
-                                leadingIcon = { 
-                                    if (state.mode == mode) {
-                                        Icon(
-                                            Icons.Filled.Check,
-                                            null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                },
-                                modifier = Modifier.scale(chipScale),
-                                shape = CircleShape
-                            )
-                        }
+                        FilterChip(
+                            selected = state.mode == mode,
+                            onClick = { viewModel.setMode(mode) },
+                            interactionSource = interactionSource,
+                            label = { Text(label) },
+                            leadingIcon = { 
+                                if (state.mode == mode) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.scale(chipScale),
+                            shape = CircleShape
+                        )
                     }
                 }
             }
+        }
 
-            AnimatedVisibility(
-                visible = isClient && state.mode != ConnectionMode.Usb || state.mode != ConnectionMode.Bluetooth,
-                enter = fadeIn(tween(300)) + slideInVertically(
-                    initialOffsetY = { 15 },
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-                ) + scaleIn(initialScale = 0.95f),
-                exit = fadeOut(tween(200)) + slideOutVertically { 10 } + scaleOut(targetScale = 0.95f)
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (isClient && state.mode != ConnectionMode.Usb) {
-                        OutlinedTextField(
-                            value = when (state.mode) {
-                                ConnectionMode.Bluetooth -> state.bluetoothAddress
-                                else -> state.ipAddress
-                            },
-                            onValueChange = { viewModel.setIp(it) },
-                            label = {
-                                Text(
-                                    when (state.mode) {
-                                        ConnectionMode.Bluetooth -> strings.bluetoothAddressLabel
-                                        else -> strings.targetIpLabel
-                                    }
-                                )
-                            },
-                            modifier = if (state.mode == ConnectionMode.Bluetooth) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    if (state.mode != ConnectionMode.Bluetooth) {
-                        OutlinedTextField(
-                            value = state.port,
-                            onValueChange = { viewModel.setPort(it) },
-                            label = { Text(strings.portLabel) },
-                            modifier = if (isClient && state.mode != ConnectionMode.Usb) Modifier.width(100.dp) else Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+        AnimatedVisibility(
+            visible = isClient && state.mode != ConnectionMode.Usb || state.mode != ConnectionMode.Bluetooth,
+            enter = fadeIn(tween(300)) + slideInVertically(
+                initialOffsetY = { 15 },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+            ) + scaleIn(initialScale = 0.95f),
+            exit = fadeOut(tween(200)) + slideOutVertically { 10 } + scaleOut(targetScale = 0.95f)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (isClient && state.mode != ConnectionMode.Usb) {
+                    OutlinedTextField(
+                        value = when (state.mode) {
+                            ConnectionMode.Bluetooth -> state.bluetoothAddress
+                            else -> state.ipAddress
+                        },
+                        onValueChange = { viewModel.setIp(it) },
+                        label = {
+                            Text(
+                                when (state.mode) {
+                                    ConnectionMode.Bluetooth -> strings.bluetoothAddressLabel
+                                    else -> strings.targetIpLabel
+                                }
+                            )
+                        },
+                        modifier = if (state.mode == ConnectionMode.Bluetooth) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (state.mode != ConnectionMode.Bluetooth) {
+                    OutlinedTextField(
+                        value = state.port,
+                        onValueChange = { viewModel.setPort(it) },
+                        label = { Text(strings.portLabel) },
+                        modifier = if (isClient && state.mode != ConnectionMode.Usb) Modifier.width(100.dp) else Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         }
@@ -412,7 +457,8 @@ private fun MuteCard(
     state: AppUiState,
     viewModel: MainViewModel,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -429,44 +475,70 @@ private fun MuteCard(
         animationSpec = tween(300, easing = EasingFunctions.EaseInOutCubic)
     )
     
-    Card(
-        onClick = { viewModel.toggleMute() },
-        interactionSource = interactionSource,
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(cardScale),
-        colors = CardDefaults.cardColors(containerColor = cardColor.copy(alpha = cardOpacity)),
-        shape = RoundedCornerShape(24.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+    if (state.backgroundSettings.enableHazeEffect && hazeState != null) {
+        HazeCard(
+            hazeState = hazeState,
+            enabled = true,
+            hazeColor = cardColor.copy(alpha = cardOpacity * 0.7f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .scale(cardScale)
+                .clip(RoundedCornerShape(24.dp))
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null
+                ) { viewModel.toggleMute() }
         ) {
-            val iconScale by animateFloatAsState(
-                targetValue = if (state.isMuted) 1.1f else 1f,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-            )
-            
-            Icon(
-                if (state.isMuted) Icons.Filled.MicOff else Icons.Filled.Mic,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp).scale(iconScale),
-                tint = if (state.isMuted)
-                    MaterialTheme.colorScheme.onErrorContainer
-                else
-                    MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = if (state.isMuted) strings.unmuteLabel else strings.muteLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (state.isMuted)
-                    MaterialTheme.colorScheme.onErrorContainer
-                else
-                    MaterialTheme.colorScheme.onSurface
-            )
+            MuteCardContent(state = state, strings = strings)
         }
+    } else {
+        Card(
+            onClick = { viewModel.toggleMute() },
+            interactionSource = interactionSource,
+            modifier = Modifier
+                .fillMaxWidth()
+                .scale(cardScale),
+            colors = CardDefaults.cardColors(containerColor = cardColor.copy(alpha = cardOpacity)),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            MuteCardContent(state = state, strings = strings)
+        }
+    }
+}
+
+@Composable
+private fun MuteCardContent(
+    state: AppUiState,
+    strings: AppStrings
+) {
+    Row(
+        modifier = Modifier.padding(20.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val iconScale by animateFloatAsState(
+            targetValue = if (state.isMuted) 1.1f else 1f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+        )
+        
+        Icon(
+            if (state.isMuted) Icons.Filled.MicOff else Icons.Filled.Mic,
+            contentDescription = null,
+            modifier = Modifier.size(28.dp).scale(iconScale),
+            tint = if (state.isMuted)
+                MaterialTheme.colorScheme.onErrorContainer
+            else
+                MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = if (state.isMuted) strings.unmuteLabel else strings.muteLabel,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (state.isMuted)
+                MaterialTheme.colorScheme.onErrorContainer
+            else
+                MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

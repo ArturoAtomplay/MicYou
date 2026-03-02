@@ -146,5 +146,7 @@
   "clearBackgroundImage": "清除",
   "backgroundBrightnessLabel": "明度",
   "backgroundBlurLabel": "模糊",
-  "cardOpacityLabel": "卡片透明度"
+  "cardOpacityLabel": "卡片透明度",
+  "enableHazeEffectLabel": "毛玻璃效果",
+  "enableHazeEffectDesc": "为卡片添加毛玻璃模糊效果"
 }

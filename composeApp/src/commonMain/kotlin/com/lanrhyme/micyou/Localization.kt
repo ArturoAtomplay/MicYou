@@ -174,7 +174,9 @@ data class AppStrings(
     val clearBackgroundImage: String = "Clear",
     val backgroundBrightnessLabel: String = "Brightness",
     val backgroundBlurLabel: String = "Blur",
-    val cardOpacityLabel: String = "Card Opacity"
+    val cardOpacityLabel: String = "Card Opacity",
+    val enableHazeEffectLabel: String = "Frosted Glass Effect",
+    val enableHazeEffectDesc: String = "Add frosted glass blur effect to cards"
 )
 
 val LocalAppStrings = staticCompositionLocalOf { AppStrings() }

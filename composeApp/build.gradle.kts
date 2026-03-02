@@ -86,6 +86,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.datetime)
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation("dev.chrisbanes.haze:haze:1.7.2")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

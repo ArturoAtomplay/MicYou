@@ -570,6 +570,21 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                         valueRange = 0f..1f
                                     )
                                 }
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(strings.enableHazeEffectLabel, style = MaterialTheme.typography.bodyMedium)
+                                        Text(strings.enableHazeEffectDesc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Switch(
+                                        checked = state.backgroundSettings.enableHazeEffect,
+                                        onCheckedChange = { viewModel.setEnableHazeEffect(it) }
+                                    )
+                                }
                             }
                         }
                     }

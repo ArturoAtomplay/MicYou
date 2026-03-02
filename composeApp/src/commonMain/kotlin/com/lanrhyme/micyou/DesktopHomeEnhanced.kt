@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lanrhyme.micyou.animation.EasingFunctions
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.icon_bluetooth
@@ -62,6 +63,10 @@ fun DesktopHomeEnhanced(
     val strings = LocalAppStrings.current
     
     var visible by remember { mutableStateOf(false) }
+    
+    val hazeState = if (state.backgroundSettings.enableHazeEffect && state.backgroundSettings.hasCustomBackground) {
+        rememberHazeState()
+    } else null
     
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.9f,
@@ -125,7 +130,8 @@ fun DesktopHomeEnhanced(
         Box(modifier = Modifier.fillMaxSize()) {
             CustomBackground(
                 settings = state.backgroundSettings,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                hazeState = hazeState
             )
             
             Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -135,7 +141,8 @@ fun DesktopHomeEnhanced(
                     onMinimize = onMinimize,
                     onClose = onClose,
                     strings = strings,
-                    cardOpacity = state.backgroundSettings.cardOpacity
+                    cardOpacity = state.backgroundSettings.cardOpacity,
+                    hazeState = hazeState
                 )
                 
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -145,7 +152,8 @@ fun DesktopHomeEnhanced(
                         isBluetoothDisabled = isBluetoothDisabled,
                         strings = strings,
                         modifier = Modifier.weight(0.38f),
-                        cardOpacity = state.backgroundSettings.cardOpacity
+                        cardOpacity = state.backgroundSettings.cardOpacity,
+                        hazeState = hazeState
                     )
                     
                     CenterPanel(
@@ -154,7 +162,8 @@ fun DesktopHomeEnhanced(
                         audioLevel = audioLevel,
                         strings = strings,
                         modifier = Modifier.weight(0.62f),
-                        cardOpacity = state.backgroundSettings.cardOpacity
+                        cardOpacity = state.backgroundSettings.cardOpacity,
+                        hazeState = hazeState
                     )
                 }
                 
@@ -163,7 +172,8 @@ fun DesktopHomeEnhanced(
                     viewModel = viewModel,
                     onOpenSettings = onOpenSettings,
                     strings = strings,
-                    cardOpacity = state.backgroundSettings.cardOpacity
+                    cardOpacity = state.backgroundSettings.cardOpacity,
+                    hazeState = hazeState
                 )
             }
         }
@@ -177,15 +187,19 @@ private fun HeaderSection(
     onMinimize: () -> Unit,
     onClose: () -> Unit,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity),
-        modifier = Modifier.fillMaxWidth()
+        hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+        modifier = Modifier.fillMaxWidth(),
+        hazeState = hazeState,
+        enabled = state.backgroundSettings.enableHazeEffect
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -240,7 +254,8 @@ private fun LeftPanel(
     isBluetoothDisabled: Boolean,
     strings: AppStrings,
     modifier: Modifier = Modifier,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ModeCard(
@@ -248,7 +263,9 @@ private fun LeftPanel(
             onModeSelected = { viewModel.setMode(it) },
             isBluetoothDisabled = isBluetoothDisabled,
             strings = strings,
-            cardOpacity = cardOpacity
+            cardOpacity = cardOpacity,
+            hazeState = hazeState,
+            enableHaze = state.backgroundSettings.enableHazeEffect
         )
         
         if (state.mode != ConnectionMode.Bluetooth) {
@@ -256,7 +273,9 @@ private fun LeftPanel(
                 port = state.port,
                 onPortChange = { viewModel.setPort(it) },
                 strings = strings,
-                cardOpacity = cardOpacity
+                cardOpacity = cardOpacity,
+                hazeState = hazeState,
+                enableHaze = state.backgroundSettings.enableHazeEffect
             )
         }
         
@@ -265,7 +284,9 @@ private fun LeftPanel(
             errorMessage = state.errorMessage,
             strings = strings,
             modifier = Modifier.weight(1f),
-            cardOpacity = cardOpacity
+            cardOpacity = cardOpacity,
+            hazeState = hazeState,
+            enableHaze = state.backgroundSettings.enableHazeEffect
         )
     }
 }
@@ -276,14 +297,19 @@ private fun ModeCard(
     onModeSelected: (ConnectionMode) -> Unit,
     isBluetoothDisabled: Boolean,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null,
+    enableHaze: Boolean = false
 ) {
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity),
-        modifier = Modifier.fillMaxWidth()
+        hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+        modifier = Modifier.fillMaxWidth(),
+        hazeState = hazeState,
+        enabled = enableHaze
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(strings.connectionModeLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             
             val modes = listOfNotNull(
@@ -332,14 +358,19 @@ private fun PortCard(
     port: String,
     onPortChange: (String) -> Unit,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null,
+    enableHaze: Boolean = false
 ) {
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity),
-        modifier = Modifier.fillMaxWidth()
+        hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+        modifier = Modifier.fillMaxWidth(),
+        hazeState = hazeState,
+        enabled = enableHaze
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(strings.portLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = port,
@@ -359,7 +390,9 @@ private fun StatusCard(
     errorMessage: String?,
     strings: AppStrings,
     modifier: Modifier = Modifier,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null,
+    enableHaze: Boolean = false
 ) {
     val statusColor by animateColorAsState(
         targetValue = when (streamState) {
@@ -371,10 +404,13 @@ private fun StatusCard(
         animationSpec = tween(300)
     )
     
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity),
-        modifier = modifier.fillMaxWidth()
+        hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+        modifier = modifier.fillMaxWidth(),
+        hazeState = hazeState,
+        enabled = enableHaze
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(12.dp),
@@ -440,15 +476,19 @@ private fun CenterPanel(
     audioLevel: Float,
     strings: AppStrings,
     modifier: Modifier = Modifier,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
     val isRunning = state.streamState == StreamState.Streaming
     val isConnecting = state.streamState == StreamState.Connecting
 
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f * cardOpacity),
-        modifier = modifier.fillMaxHeight()
+        hazeColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f * cardOpacity * 0.7f),
+        modifier = modifier.fillMaxHeight(),
+        hazeState = hazeState,
+        enabled = state.backgroundSettings.enableHazeEffect
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (isRunning) {
@@ -653,15 +693,19 @@ private fun BottomBar(
     viewModel: MainViewModel,
     onOpenSettings: () -> Unit,
     strings: AppStrings,
-    cardOpacity: Float = 1f
+    cardOpacity: Float = 1f,
+    hazeState: HazeState? = null
 ) {
-    Surface(
+    HazeSurface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity),
-        modifier = Modifier.fillMaxWidth()
+        hazeColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = cardOpacity * 0.7f),
+        modifier = Modifier.fillMaxWidth(),
+        hazeState = hazeState,
+        enabled = state.backgroundSettings.enableHazeEffect
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

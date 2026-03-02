@@ -158,6 +158,7 @@ class MainViewModel : ViewModel() {
         val savedBackgroundBrightness = settings.getFloat("background_brightness", 0.5f)
         val savedBackgroundBlur = settings.getFloat("background_blur", 0f)
         val savedCardOpacity = settings.getFloat("card_opacity", 1f)
+        val savedEnableHazeEffect = settings.getBoolean("enable_haze_effect", false)
 
         _uiState.update { 
             it.copy(
@@ -192,7 +193,8 @@ class MainViewModel : ViewModel() {
                     imagePath = savedBackgroundImagePath,
                     brightness = savedBackgroundBrightness,
                     blurRadius = savedBackgroundBlur,
-                    cardOpacity = savedCardOpacity
+                    cardOpacity = savedCardOpacity,
+                    enableHazeEffect = savedEnableHazeEffect
                 )
             ) 
         }
@@ -639,6 +641,12 @@ class MainViewModel : ViewModel() {
         val newSettings = _uiState.value.backgroundSettings.copy(cardOpacity = opacity)
         _uiState.update { it.copy(backgroundSettings = newSettings) }
         settings.putFloat("card_opacity", opacity)
+    }
+    
+    fun setEnableHazeEffect(enabled: Boolean) {
+        val newSettings = _uiState.value.backgroundSettings.copy(enableHazeEffect = enabled)
+        _uiState.update { it.copy(backgroundSettings = newSettings) }
+        settings.putBoolean("enable_haze_effect", enabled)
     }
     
     fun clearBackgroundImage() {

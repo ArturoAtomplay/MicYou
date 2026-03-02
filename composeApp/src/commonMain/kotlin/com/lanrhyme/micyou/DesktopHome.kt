@@ -105,6 +105,7 @@ import com.lanrhyme.micyou.animation.rememberGlowAnimation
 import com.lanrhyme.micyou.animation.rememberPulseAnimation
 import com.lanrhyme.micyou.animation.rememberRotationAnimation
 import com.lanrhyme.micyou.animation.rememberWaveAnimation
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.icon_settings
@@ -134,6 +135,10 @@ fun DesktopHome(
     
     var visible by remember { mutableStateOf(false) }
     var cardVisible by remember { mutableStateOf(false) }
+    
+    val hazeState = if (state.backgroundSettings.enableHazeEffect && state.backgroundSettings.hasCustomBackground) {
+        rememberHazeState()
+    } else null
     
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.85f,
@@ -221,7 +226,8 @@ fun DesktopHome(
         Box(modifier = Modifier.fillMaxSize()) {
             CustomBackground(
                 settings = state.backgroundSettings,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                hazeState = hazeState
             )
             
             Row(
@@ -232,7 +238,9 @@ fun DesktopHome(
                     visible = cardVisible,
                     delayMillis = 100,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
-                    cardOpacity = state.backgroundSettings.cardOpacity
+                    cardOpacity = state.backgroundSettings.cardOpacity,
+                    hazeState = hazeState,
+                    enableHaze = state.backgroundSettings.enableHazeEffect
                 ) {
                     NetworkConfigCard(
                         state = state,
@@ -249,7 +257,9 @@ fun DesktopHome(
                     modifier = Modifier.weight(0.8f).fillMaxHeight(),
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(22.dp),
-                    cardOpacity = state.backgroundSettings.cardOpacity
+                    cardOpacity = state.backgroundSettings.cardOpacity,
+                    hazeState = hazeState,
+                    enableHaze = state.backgroundSettings.enableHazeEffect
                 ) {
                     ControlCenter(
                         state = state,
@@ -263,7 +273,9 @@ fun DesktopHome(
                     visible = cardVisible,
                     delayMillis = 300,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
-                    cardOpacity = state.backgroundSettings.cardOpacity
+                    cardOpacity = state.backgroundSettings.cardOpacity,
+                    hazeState = hazeState,
+                    enableHaze = state.backgroundSettings.enableHazeEffect
                 ) {
                     StatusControlPanel(
                         state = state,
@@ -287,6 +299,8 @@ private fun AnimatedCard(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     shape: RoundedCornerShape = RoundedCornerShape(22.dp),
     cardOpacity: Float = 1f,
+    hazeState: HazeState? = null,
+    enableHaze: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val cardAlpha by animateFloatAsState(
@@ -306,20 +320,38 @@ private fun AnimatedCard(
         animationSpec = tween(500, delayMillis, easing = EasingFunctions.EaseOutExpo)
     )
 
-    Card(
-        modifier = modifier
-            .graphicsLayer {
-                this.alpha = cardAlpha
-                this.scaleX = cardScale
-                this.scaleY = cardScale
-                translationY = cardOffsetY
-            },
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor.copy(alpha = cardOpacity)
-        ),
-        shape = shape
-    ) {
-        content()
+    if (enableHaze && hazeState != null) {
+        HazeCard(
+            hazeState = hazeState,
+            enabled = true,
+            hazeColor = containerColor.copy(alpha = cardOpacity * 0.7f),
+            modifier = modifier
+                .graphicsLayer {
+                    this.alpha = cardAlpha
+                    this.scaleX = cardScale
+                    this.scaleY = cardScale
+                    translationY = cardOffsetY
+                }
+                .clip(shape)
+        ) {
+            content()
+        }
+    } else {
+        Card(
+            modifier = modifier
+                .graphicsLayer {
+                    this.alpha = cardAlpha
+                    this.scaleX = cardScale
+                    this.scaleY = cardScale
+                    translationY = cardOffsetY
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = containerColor.copy(alpha = cardOpacity)
+            ),
+            shape = shape
+        ) {
+            content()
+        }
     }
 }
 
