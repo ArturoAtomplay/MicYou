@@ -170,6 +170,7 @@ data class AppStrings(
     
     // Visualizer Settings
     val visualizerStyleLabel: String = "Visualizer Style",
+    val visualizerStyleVolumeRing: String = "Volume Ring",
     val visualizerStyleRipple: String = "Ripple",
     val visualizerStyleBars: String = "Bars",
     val visualizerStyleWave: String = "Wave",

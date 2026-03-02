@@ -15,9 +15,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.kdroid.composetray.tray.api.Tray
 import com.lanrhyme.micyou.platform.PlatformInfo
 import com.lanrhyme.micyou.util.JvmLogger
-import com.kdroid.composetray.tray.api.Tray
 import kotlinx.coroutines.runBlocking
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.app_icon
@@ -198,7 +198,7 @@ fun main() {
 
         if (isSettingsOpen) {
             val settingsState = rememberWindowState(
-                width = 800.dp,
+                width = 850.dp,
                 height = 650.dp,
                 position = WindowPosition(Alignment.Center)
             )

@@ -5,13 +5,13 @@ on:
     branches:
       - master
     paths:
-      - 'composeApp/src/commonMain/composeResources/files/i18n/strings_zh.json'
+      - 'composeApp/src/commonMain/composeResources/files/i18n/strings_en.json'
   workflow_dispatch:
     inputs:
       upload_translations:
-        description: 'Upload existing translations (use when re-initializing)'
+        description: '上传已有的翻译（重新初始化时使用）'
         required: false
-        default: 'false'
+        default: false
         type: boolean
   schedule:
     - cron: '0 0 * * 0'

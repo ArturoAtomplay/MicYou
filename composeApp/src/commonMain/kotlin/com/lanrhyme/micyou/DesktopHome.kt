@@ -576,11 +576,97 @@ private fun AdvancedAudioVisualizer(
     val glowAlpha = rememberGlowAnimation(0.2f, 0.5f, 2000)
     
     when (style) {
+        VisualizerStyle.VolumeRing -> VolumeRingVisualizerDesktop(modifier, safeAudioLevel, color)
         VisualizerStyle.Ripple -> RippleVisualizerDesktop(modifier, safeAudioLevel, color, breathScale, wavePhase, glowAlpha)
         VisualizerStyle.Bars -> BarsVisualizerDesktop(modifier, safeAudioLevel, color, wavePhase)
         VisualizerStyle.Wave -> WaveVisualizerDesktop(modifier, safeAudioLevel, color, wavePhase)
         VisualizerStyle.Glow -> GlowVisualizerDesktop(modifier, safeAudioLevel, color, glowAlpha, breathScale)
         VisualizerStyle.Particles -> ParticlesVisualizerDesktop(modifier, safeAudioLevel, color, wavePhase)
+    }
+}
+
+@Composable
+private fun VolumeRingVisualizerDesktop(
+    modifier: Modifier,
+    audioLevel: Float,
+    color: Color
+) {
+    val animatedLevel by animateFloatAsState(
+        targetValue = audioLevel,
+        animationSpec = tween(100, easing = LinearEasing),
+        label = "VolumeLevel"
+    )
+    
+    Canvas(modifier = modifier) {
+        val center = Offset(size.width / 2, size.height / 2)
+        val baseRadius = min(size.width, size.height) / 2 * 0.85f
+        val strokeWidth = 8.dp.toPx()
+        
+        drawCircle(
+            color = color.copy(alpha = 0.15f),
+            radius = baseRadius,
+            center = center,
+            style = Stroke(width = strokeWidth)
+        )
+        
+        val sweepAngle = 360f * animatedLevel
+        val startAngle = -90f
+        
+        drawArc(
+            color = color,
+            startAngle = startAngle,
+            sweepAngle = sweepAngle,
+            useCenter = false,
+            topLeft = Offset(center.x - baseRadius, center.y - baseRadius),
+            size = androidx.compose.ui.geometry.Size(baseRadius * 2, baseRadius * 2),
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+        )
+        
+        if (audioLevel > 0.05f) {
+            val endAngleRad = Math.toRadians((startAngle + sweepAngle).toDouble()).toFloat()
+            val dotX = center.x + baseRadius * cos(endAngleRad)
+            val dotY = center.y + baseRadius * sin(endAngleRad)
+            
+            drawCircle(
+                color = color.copy(alpha = 0.9f),
+                radius = strokeWidth * 0.8f,
+                center = Offset(dotX, dotY)
+            )
+        }
+        
+        val tickCount = 60
+        for (i in 0 until tickCount) {
+            val tickAngle = -90f + (i.toFloat() / tickCount) * 360f
+            val tickAngleRad = Math.toRadians(tickAngle.toDouble()).toFloat()
+            val tickProgress = i.toFloat() / tickCount
+            
+            val innerRadius = baseRadius - strokeWidth * 0.5f
+            val outerRadius = baseRadius + strokeWidth * 0.5f
+            
+            val tickAlpha = if (tickProgress <= animatedLevel) 0.4f else 0.1f
+            val tickLength = if (i % 5 == 0) 6.dp.toPx() else 3.dp.toPx()
+            
+            val startX = center.x + innerRadius * cos(tickAngleRad)
+            val startY = center.y + innerRadius * sin(tickAngleRad)
+            val endX = center.x + (outerRadius + tickLength) * cos(tickAngleRad)
+            val endY = center.y + (outerRadius + tickLength) * sin(tickAngleRad)
+            
+            drawLine(
+                color = color.copy(alpha = tickAlpha),
+                start = Offset(startX, startY),
+                end = Offset(endX, endY),
+                strokeWidth = if (i % 5 == 0) 2.dp.toPx() else 1.dp.toPx()
+            )
+        }
+        
+        val glowRadius = baseRadius * 0.6f * animatedLevel
+        if (glowRadius > 0) {
+            drawCircle(
+                color = color.copy(alpha = 0.1f * animatedLevel),
+                radius = glowRadius,
+                center = center
+            )
+        }
     }
 }
 

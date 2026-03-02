@@ -26,6 +26,7 @@ enum class NoiseReductionType(val label: String) {
 }
 
 enum class VisualizerStyle(val label: String) {
+    VolumeRing("VolumeRing"),
     Ripple("Ripple"),
     Bars("Bars"),
     Wave("Wave"),
@@ -82,7 +83,7 @@ data class AppUiState(
     val rememberCloseAction: Boolean = false,
     val newVersionAvailable: GitHubRelease? = null,
     val pocketMode: Boolean = true,
-    val visualizerStyle: VisualizerStyle = VisualizerStyle.Ripple,
+    val visualizerStyle: VisualizerStyle = VisualizerStyle.VolumeRing,
     
     // Background Settings
     val backgroundSettings: BackgroundSettings = BackgroundSettings()

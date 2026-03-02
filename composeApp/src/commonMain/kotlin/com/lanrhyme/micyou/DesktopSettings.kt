@@ -520,6 +520,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                         onClick = { viewModel.setVisualizerStyle(style) },
                                         label = { 
                                             Text(when(style) {
+                                                VisualizerStyle.VolumeRing -> strings.visualizerStyleVolumeRing
                                                 VisualizerStyle.Ripple -> strings.visualizerStyleRipple
                                                 VisualizerStyle.Bars -> strings.visualizerStyleBars
                                                 VisualizerStyle.Wave -> strings.visualizerStyleWave
