@@ -161,41 +161,12 @@ MicYou
 > [!TIP]
 > 遇到问题？请查看：[常见问题](./docs/FAQ_ZH.md)
 
-## 源码构建
+## 贡献指南
 
-本项目使用 Kotlin Multiplatform 构建
+> [!NOTE]
+> 贡献指南内容为英文，请参见 [CONTRIBUTING.md](./CONTRIBUTING.md)（英文）。
 
-**Android 应用（APK）：**
-```bash
-./gradlew :composeApp:assembleDebug
-```
-
-**桌面应用（直接运行）：**
-```bash
-./gradlew :composeApp:run
-```
-
-**构建发布包：**
-
-**Windows 安装包（NSIS）：**
-```bash
-./gradlew :composeApp:packageWindowsNsis
-```
-
-**Windows ZIP 归档：**
-```bash
-./gradlew :composeApp:packageWindowsZip
-```
-
-**Linux DEB 包：**
-```bash
-./gradlew :composeApp:packageDeb
-```
-
-**Linux RPM 包：**
-```bash
-./gradlew :composeApp:packageRpm
-```
+我们欢迎各种形式的贡献！无论是报告 Bug、建议功能、协助翻译还是贡献代码，请查看我们的 [贡献指南](./CONTRIBUTING.md) 开始参与。
 
 ## Contributors
 <a href="https://github.com/LanRhyme/MicYou/graphs/contributors">
